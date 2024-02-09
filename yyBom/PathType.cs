@@ -2,8 +2,10 @@
 {
     public enum PathType
     {
-        Directory,
-        File,
-        Extension
+        DirectoryPath,
+        DirectoryName,
+        FilePath,
+        FileName,
+        FileExtension
     }
 }

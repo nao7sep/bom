@@ -4,6 +4,6 @@
     {
         public PathType? PathType { get; set; }
 
-        public string? Path { get; set; }
+        public string? Value { get; set; }
     }
 }

@@ -15,9 +15,11 @@ namespace yyBom
                 if (File.Exists (xIgnoredPathsFilePath) == false)
                     File.WriteAllLines (xIgnoredPathsFilePath,
                         [
-                            @"Directory: C:\Directory",
-                            @"File: C:\File.ext",
-                            "Extension: .ext"
+                            @"DirectoryPath: C:\Directory",
+                            "DirectoryName: Directory",
+                            @"FilePath: C:\File.ext",
+                            "FileName: File.ext",
+                            "FileExtension: .ext"
                         ],
                         Encoding.UTF8);
 
@@ -35,20 +37,26 @@ namespace yyBom
                     string xKey = xLine.Substring (0, xLine.IndexOf (':', StringComparison.Ordinal)).Trim (),
                         xValue = xLine.Substring (xLine.IndexOf (':', StringComparison.Ordinal) + 1).Trim ();
 
-                    if (xIgnoredPaths.Any (x => x.Path!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
+                    if (xIgnoredPaths.Any (x => x.Value!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
                     {
                         Console.WriteLine ($"Duplicate value in {xIgnoredPathsFileName}: {xLine}");
                         return;
                     }
 
-                    if (xKey.Equals ("Directory", StringComparison.OrdinalIgnoreCase) && Path.IsPathFullyQualified (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.Directory, Path = xValue });
+                    if (xKey.Equals ("DirectoryPath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryPath, Value = xValue });
 
-                    else if (xKey.Equals ("File", StringComparison.OrdinalIgnoreCase) && Path.IsPathFullyQualified (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.File, Path = xValue });
+                    else if (xKey.Equals ("DirectoryName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryName, Value = xValue });
 
-                    else if (xKey.Equals ("Extension", StringComparison.OrdinalIgnoreCase) && xValue.StartsWith ('.') && xValue.Length >= 2) // Minimal validation.
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.Extension, Path = xValue });
+                    else if (xKey.Equals ("FilePath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FilePath, Value = xValue });
+
+                    else if (xKey.Equals ("FileName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileName, Value = xValue });
+
+                    else if (xKey.Equals ("FileExtension", StringComparison.OrdinalIgnoreCase) && Validator.IsFileExtension (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileExtension, Value = xValue });
 
                     else
                     {
@@ -70,8 +78,9 @@ namespace yyBom
                 if (File.Exists (xSpecifiedEncodingsFilePath) == false)
                     File.WriteAllLines (xSpecifiedEncodingsFilePath,
                         [
-                            @"File: C:\File.ext | ASCII",
-                            "Extension: .ext | shift_jis"
+                            @"FilePath: C:\File.ext | ASCII",
+                            "FileName: File.ext | ASCII",
+                            "FileExtension: .ext | shift_jis"
                         ],
                         Encoding.UTF8);
 
@@ -93,7 +102,7 @@ namespace yyBom
                         xValue = xLine.Substring (xColonIndex + 1, xPipeIndex - xColonIndex - 1).Trim (),
                         xEncodingName = xLine.Substring (xPipeIndex + 1).Trim ();
 
-                    if (xSpecifiedEncodings.Any (x => x.Path!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
+                    if (xSpecifiedEncodings.Any (x => x.Value!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
                     {
                         Console.WriteLine ($"Duplicate value in {xSpecifiedEncodingsFileName}: {xLine}");
                         return;
@@ -101,15 +110,21 @@ namespace yyBom
 
                     try
                     {
-                        if (xKey.Equals ("File", StringComparison.OrdinalIgnoreCase) && Path.IsPathFullyQualified (xValue))
+                        if (xKey.Equals ("FilePath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
                         {
-                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.File, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FilePath, Value = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
                             continue;
                         }
 
-                        if (xKey.Equals ("Extension", StringComparison.OrdinalIgnoreCase) && xValue.StartsWith ('.') && xValue.Length >= 2)
+                        if (xKey.Equals ("FileName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
                         {
-                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.Extension, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FileName, Value = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            continue;
+                        }
+
+                        if (xKey.Equals ("FileExtension", StringComparison.OrdinalIgnoreCase) && Validator.IsFileExtension (xValue))
+                        {
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FileExtension, Value = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
                             continue;
                         }
                     }
@@ -144,6 +159,183 @@ namespace yyBom
                     Console.WriteLine ($"The following paths do not exist:{Environment.NewLine}{string.Join (Environment.NewLine, xPaths.Where (x => x.Exists == false).Select (x => $"    {x.Path}"))}");
                     return;
                 }
+
+                // -----------------------------------------------------------------------------
+
+                void HandleFile (FileInfo file, List <DetectedPathModel> detectedPaths)
+                {
+                    if (detectedPaths.Any (x => x.PathType == PathType.FilePath && x.Path!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)))
+                        return;
+
+                    if (xIgnoredPaths.Any (x => x.PathType == PathType.FilePath && x.Value!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
+                    if (xIgnoredPaths.Any (x => x.PathType == PathType.FileName && x.Value!.Equals (file.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
+                    if (xIgnoredPaths.Any (x => x.PathType == PathType.FileExtension && x.Value!.Equals (file.Extension, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
+                    // Files of this size or larger are rarely hand-edited.
+                    if (file.Length >= 3 * 1024 * 1024)
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
+                    DetectedPathModel xDetectedPath = new () { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = false };
+
+                    try
+                    {
+                        byte [] xBytes = File.ReadAllBytes (file.FullName);
+
+                        if (xBytes.Length >= 3 && xBytes [0] == 0xEF && xBytes [1] == 0xBB && xBytes [2] == 0xBF)
+                        {
+                            xDetectedPath.StartsWithUtf8Bom = true;
+                            xDetectedPath.DetectedOrSpecifiedEncoding = Encoding.UTF8;
+                        }
+
+                        else
+                        {
+                            xDetectedPath.StartsWithUtf8Bom = false;
+
+                            xDetectedPath.DetectedOrSpecifiedEncoding = xSpecifiedEncodings.FirstOrDefault (x =>
+                            {
+                                // I choose not to expect a case where a certain extension is associated with a certain encoding
+                                //     AND a certain file with the same extension must be re-associated with a different encoding with its full path.
+
+                                return (x.PathType == PathType.FilePath && x.Value!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)) ||
+                                    (x.PathType == PathType.FileName && x.Value!.Equals (file.Name, StringComparison.OrdinalIgnoreCase)) ||
+                                    (x.PathType == PathType.FileExtension && x.Value!.Equals (file.Extension, StringComparison.OrdinalIgnoreCase));
+                            })?.
+                            Encoding;
+                        }
+
+                        if (xDetectedPath.StartsWithUtf8Bom.Value || xDetectedPath.DetectedOrSpecifiedEncoding != null) // The first half is redundant, but the code is more readable this way.
+                            xDetectedPath.FileContents = xDetectedPath.DetectedOrSpecifiedEncoding!.GetString (xBytes);
+
+                        detectedPaths.Add (xDetectedPath);
+                    }
+
+                    catch
+                    {
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.WriteLine ("Failed to load file: " + file.FullName);
+                        Console.ResetColor ();
+                    }
+                }
+
+                void HandleDirectory (DirectoryInfo directory, List <DetectedPathModel> detectedPaths)
+                {
+                    try
+                    {
+                        if (detectedPaths.Any (x => x.PathType == PathType.DirectoryPath && x.Path!.Equals (directory.FullName, StringComparison.OrdinalIgnoreCase)))
+                            return;
+
+                        if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryPath && x.Value!.Equals (directory.FullName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            return;
+                        }
+
+                        if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryName && x.Value!.Equals (directory.Name, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            return;
+                        }
+
+                        foreach (DirectoryInfo xSubdirectory in directory.GetDirectories ())
+                            HandleDirectory (xSubdirectory, detectedPaths);
+
+                        foreach (FileInfo xFile in directory.GetFiles ())
+                            HandleFile (xFile, detectedPaths);
+
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = false });
+                    }
+
+                    catch
+                    {
+                        // Displays an error message and continues.
+
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.WriteLine ("Failed to scan directory: " + directory.FullName);
+                        Console.ResetColor ();
+                    }
+                }
+
+                List <DetectedPathModel> xDetectedPaths = [];
+
+                foreach (string xPath in xPaths.Select (x => x.Path))
+                {
+                    if (Directory.Exists (xPath))
+                        HandleDirectory (new DirectoryInfo (xPath), xDetectedPaths);
+
+                    else // if (File.Exists (xPath)) // Either a directory or a file exists.
+                        HandleFile (new FileInfo (xPath), xDetectedPaths);
+                }
+
+                var xOrderedDetectedPaths = xDetectedPaths.OrderBy (x => x.Path, StringComparer.OrdinalIgnoreCase).ToList ();
+
+                // -----------------------------------------------------------------------------
+
+                StringBuilder xOutput = new ();
+
+                var xIgnoredDetectedDirectoryPaths = xOrderedDetectedPaths.Where (x => x.PathType == PathType.DirectoryPath && x.IsIgnored == true).ToList ();
+
+                if (xIgnoredDetectedDirectoryPaths.Count > 0)
+                {
+                    xOutput.AppendLine ("[Ignored Directories]");
+                    xOutput.AppendLine (string.Join (Environment.NewLine, xIgnoredDetectedDirectoryPaths.Select (x => x.Path)));
+                }
+
+                var xIgnoredDetectedFilePaths = xOrderedDetectedPaths.Where (x => x.PathType == PathType.FilePath && x.IsIgnored == true).ToList ();
+
+                if (xIgnoredDetectedFilePaths.Count > 0)
+                {
+                    if (xOutput.Length > 0)
+                        xOutput.AppendLine ();
+
+                    xOutput.AppendLine ("[Ignored Files]");
+                    xOutput.AppendLine (string.Join (Environment.NewLine, xIgnoredDetectedFilePaths.Select (x => x.Path)));
+                }
+
+                var xDetectedDirectoryPaths = xOrderedDetectedPaths.Where (x => x.PathType == PathType.DirectoryPath && x.IsIgnored == false).ToList ();
+
+                if (xDetectedDirectoryPaths.Count > 0)
+                {
+                    if (xOutput.Length > 0)
+                        xOutput.AppendLine ();
+
+                    xOutput.AppendLine ("[Detected Directories]");
+                    xOutput.AppendLine (string.Join (Environment.NewLine, xDetectedDirectoryPaths.Select (x => x.Path)));
+                }
+
+                var xDetectedFilePaths = xOrderedDetectedPaths.Where (x => x.PathType == PathType.FilePath && x.IsIgnored == false).ToList ();
+
+                if (xDetectedFilePaths.Count > 0)
+                {
+                    if (xOutput.Length > 0)
+                        xOutput.AppendLine ();
+
+                    xOutput.AppendLine ("[Detected Files]");
+
+                    xOutput.AppendLine (string.Join (Environment.NewLine, xDetectedFilePaths.Select (x =>
+                        $"{x.Path}, UTF-8 BOM: {x.StartsWithUtf8Bom}, Encoding: {(x.DetectedOrSpecifiedEncoding != null ? x.DetectedOrSpecifiedEncoding.EncodingName : yyString.GetVisibleString (null))}")));
+                }
+
+                string xOutputFilePath = Path.Join (yySpecialDirectories.Desktop, $"yyBom-{yyFormatter.ToRoundtripFileNameString (DateTime.UtcNow)}.txt");
+                File.WriteAllText (xOutputFilePath, xOutput.ToString (), Encoding.UTF8);
             }
 
             catch (Exception xException)
