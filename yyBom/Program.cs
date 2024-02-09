@@ -284,8 +284,8 @@ namespace yyBom
                         LoadFile (new FileInfo (xPath), xDetectedPaths);
                 }
 
-                // For the "Loading directory" message.
-                Console.WriteLine ();
+                string xFirstPart = "Loaded all directories and files.";
+                Console.WriteLine ($"{xFirstPart}{xSpaces.AsSpan (xFirstPart.Length)}");
 
                 var xOrderedDetectedPaths = xDetectedPaths.OrderBy (x => x.Path, StringComparer.OrdinalIgnoreCase).ToList ();
 
@@ -344,16 +344,21 @@ namespace yyBom
                 // I've tried a few different implementations.
                 // Simply showing the file paths that require attention is the most convenient for me.
 
-                Console.BackgroundColor = ConsoleColor.Blue;
-                Console.ForegroundColor = ConsoleColor.White;
-
-                Console.WriteLine (string.Join (Environment.NewLine, xDetectedFilePaths.Where (x =>
+                var xPathsToBeChecked = xDetectedFilePaths.Where (x =>
                 {
                     return x.StartsWithUtf8Bom == false && x.DetectedOrSpecifiedEncoding == null;
                 }).
-                Select (y => y.Path)));
+                Select (y => y.Path).ToList ();
 
-                Console.ResetColor ();
+                if (xPathsToBeChecked.Count > 0)
+                {
+                    Console.BackgroundColor = ConsoleColor.Blue;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine (string.Join (Environment.NewLine, xPathsToBeChecked));
+                    Console.ResetColor ();
+                }
+
+                else Console.WriteLine ("Everything is fine.");
             }
 
             catch (Exception xException)
