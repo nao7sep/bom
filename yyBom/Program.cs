@@ -162,7 +162,7 @@ namespace yyBom
 
                 // -----------------------------------------------------------------------------
 
-                void HandleFile (FileInfo file, List <DetectedPathModel> detectedPaths)
+                void LoadFile (FileInfo file, List <DetectedPathModel> detectedPaths)
                 {
                     if (detectedPaths.Any (x => x.PathType == PathType.FilePath && x.Path!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)))
                         return;
@@ -185,20 +185,17 @@ namespace yyBom
                         return;
                     }
 
-                    // Files of this size or larger are rarely hand-edited.
-                    if (file.Length >= 3 * 1024 * 1024)
-                    {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
-                        return;
-                    }
-
                     DetectedPathModel xDetectedPath = new () { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = false };
 
                     try
                     {
-                        byte [] xBytes = File.ReadAllBytes (file.FullName);
+                        byte [] xBytes = new byte [3];
+                        int xReadByteCount;
 
-                        if (xBytes.Length >= 3 && xBytes [0] == 0xEF && xBytes [1] == 0xBB && xBytes [2] == 0xBF)
+                        using FileStream xFileStream = file.OpenRead ();
+                        xReadByteCount = xFileStream.Read (xBytes, 0, 3);
+
+                        if (xReadByteCount == 3 && xBytes [0] == 0xEF && xBytes [1] == 0xBB && xBytes [2] == 0xBF)
                         {
                             xDetectedPath.StartsWithUtf8Bom = true;
                             xDetectedPath.DetectedOrSpecifiedEncoding = Encoding.UTF8;
@@ -220,9 +217,6 @@ namespace yyBom
                             Encoding;
                         }
 
-                        if (xDetectedPath.StartsWithUtf8Bom.Value || xDetectedPath.DetectedOrSpecifiedEncoding != null) // The first half is redundant, but the code is more readable this way.
-                            xDetectedPath.FileContents = xDetectedPath.DetectedOrSpecifiedEncoding!.GetString (xBytes);
-
                         detectedPaths.Add (xDetectedPath);
                     }
 
@@ -235,7 +229,9 @@ namespace yyBom
                     }
                 }
 
-                void HandleDirectory (DirectoryInfo directory, List <DetectedPathModel> detectedPaths)
+                const string xSpaces = "                                                                                "; // 80 spaces.
+
+                void LoadDirectory (DirectoryInfo directory, List <DetectedPathModel> detectedPaths)
                 {
                     try
                     {
@@ -254,11 +250,14 @@ namespace yyBom
                             return;
                         }
 
+                        string xFirstPart = "Loading directory: " + directory.Name;
+                        Console.Write ($"{xFirstPart}{xSpaces.AsSpan (xFirstPart.Length)}\r");
+
                         foreach (DirectoryInfo xSubdirectory in directory.GetDirectories ())
-                            HandleDirectory (xSubdirectory, detectedPaths);
+                            LoadDirectory (xSubdirectory, detectedPaths);
 
                         foreach (FileInfo xFile in directory.GetFiles ())
-                            HandleFile (xFile, detectedPaths);
+                            LoadFile (xFile, detectedPaths);
 
                         detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = false });
                     }
@@ -269,7 +268,7 @@ namespace yyBom
 
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
-                        Console.WriteLine ("Failed to scan directory: " + directory.FullName);
+                        Console.WriteLine ("Failed to load directory: " + directory.FullName);
                         Console.ResetColor ();
                     }
                 }
@@ -279,11 +278,14 @@ namespace yyBom
                 foreach (string xPath in xPaths.Select (x => x.Path))
                 {
                     if (Directory.Exists (xPath))
-                        HandleDirectory (new DirectoryInfo (xPath), xDetectedPaths);
+                        LoadDirectory (new DirectoryInfo (xPath), xDetectedPaths);
 
                     else // if (File.Exists (xPath)) // Either a directory or a file exists.
-                        HandleFile (new FileInfo (xPath), xDetectedPaths);
+                        LoadFile (new FileInfo (xPath), xDetectedPaths);
                 }
+
+                // For the "Loading directory" message.
+                Console.WriteLine ();
 
                 var xOrderedDetectedPaths = xDetectedPaths.OrderBy (x => x.Path, StringComparer.OrdinalIgnoreCase).ToList ();
 
@@ -336,6 +338,22 @@ namespace yyBom
 
                 string xOutputFilePath = Path.Join (yySpecialDirectories.Desktop, $"yyBom-{yyFormatter.ToRoundtripFileNameString (DateTime.UtcNow)}.txt");
                 File.WriteAllText (xOutputFilePath, xOutput.ToString (), Encoding.UTF8);
+
+                // -----------------------------------------------------------------------------
+
+                // I've tried a few different implementations.
+                // Simply showing the file paths that require attention is the most convenient for me.
+
+                Console.BackgroundColor = ConsoleColor.Blue;
+                Console.ForegroundColor = ConsoleColor.White;
+
+                Console.WriteLine (string.Join (Environment.NewLine, xDetectedFilePaths.Where (x =>
+                {
+                    return x.StartsWithUtf8Bom == false && x.DetectedOrSpecifiedEncoding == null;
+                }).
+                Select (y => y.Path)));
+
+                Console.ResetColor ();
             }
 
             catch (Exception xException)

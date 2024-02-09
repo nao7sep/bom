@@ -19,10 +19,5 @@ namespace yyBom
         /// Not null ONLY if the UTF-8 BOM is detected OR the encoding is specified by the SpecifiedEncodings.txt file.
         /// </summary>
         public Encoding? DetectedOrSpecifiedEncoding { get; set; }
-
-        /// <summary>
-        /// Null if the UTF-8 BOM is not detected AND no encoding is specified.
-        /// </summary>
-        public string? FileContents { get; set; }
     }
 }
