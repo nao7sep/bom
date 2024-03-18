@@ -19,7 +19,12 @@ namespace yyBom
                             "DirectoryName: Directory",
                             @"FilePath: C:\File.ext",
                             "FileName: File.ext",
-                            "FileExtension: .ext"
+                            "FileExtension: .ext",
+
+                            "DirectoryNamePrefix: Prefix-",
+                            "DirectoryNameSuffix: -Suffix",
+                            "FileNamePrefix: Prefix-",
+                            "FileNameSuffix: -Suffix"
                         ],
                         Encoding.UTF8);
 
@@ -37,11 +42,12 @@ namespace yyBom
                     string xKey = xLine.Substring (0, xLine.IndexOf (':', StringComparison.Ordinal)).Trim (),
                         xValue = xLine.Substring (xLine.IndexOf (':', StringComparison.Ordinal) + 1).Trim ();
 
-                    if (xIgnoredPaths.Any (x => x.Path!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
+                    // Now some prefixes and suffixes may be shared by directories and files.
+                    /* if (xIgnoredPaths.Any (x => x.Path!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
                     {
                         Console.WriteLine ($"Duplicate value in {xIgnoredPathsFileName}: {xLine}");
                         return;
-                    }
+                    } */
 
                     if (xKey.Equals ("DirectoryPath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
                         xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryPath, Path = xValue });
@@ -57,6 +63,18 @@ namespace yyBom
 
                     else if (xKey.Equals ("FileExtension", StringComparison.OrdinalIgnoreCase) && Validator.IsFileExtension (xValue))
                         xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileExtension, Path = xValue });
+
+                    else if (xKey.Equals ("DirectoryNamePrefix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryNamePrefix, Path = xValue });
+
+                    else if (xKey.Equals ("DirectoryNameSuffix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryNameSuffix, Path = xValue });
+
+                    else if (xKey.Equals ("FileNamePrefix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileNamePrefix, Path = xValue });
+
+                    else if (xKey.Equals ("FileNameSuffix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
+                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileNameSuffix, Path = xValue });
 
                     else
                     {
@@ -102,6 +120,7 @@ namespace yyBom
                         xValue = xLine.Substring (xColonIndex + 1, xPipeIndex - xColonIndex - 1).Trim (),
                         xEncodingName = xLine.Substring (xPipeIndex + 1).Trim ();
 
+                    // Still an effective check.
                     if (xSpecifiedEncodings.Any (x => x.Path!.Equals (xValue, StringComparison.OrdinalIgnoreCase)))
                     {
                         Console.WriteLine ($"Duplicate value in {xSpecifiedEncodingsFileName}: {xLine}");
@@ -188,6 +207,18 @@ namespace yyBom
                         return;
                     }
 
+                    if (xIgnoredPaths.Any (x => x.PathType == PathType.FileNamePrefix && file.Name.StartsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
+                    if (xIgnoredPaths.Any (x => x.PathType == PathType.FileNameSuffix && file.Name.EndsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        return;
+                    }
+
                     DetectedPathModel xDetectedPath = new () { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = false };
 
                     try
@@ -249,6 +280,18 @@ namespace yyBom
                         }
 
                         if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryName && x.Path!.Equals (directory.Name, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            return;
+                        }
+
+                        if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryNamePrefix && directory.Name.StartsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            return;
+                        }
+
+                        if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryNameSuffix && directory.Name.EndsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
                         {
                             detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
                             return;
