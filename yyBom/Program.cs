@@ -28,7 +28,7 @@ namespace yyBom
                         ],
                         Encoding.UTF8);
 
-                List <IgnoredPathModel> xIgnoredPaths = [];
+                List <IgnoredPathInfo> xIgnoredPaths = [];
 
                 foreach (string xLine in File.ReadAllLines (xIgnoredPathsFilePath, Encoding.UTF8).
                     Where (x => string.IsNullOrWhiteSpace (x) == false && x.TrimStart ().StartsWith ("//", StringComparison.Ordinal) == false)) // Inefficient, but it's usually a small file.
@@ -50,31 +50,31 @@ namespace yyBom
                     } */
 
                     if (xKey.Equals ("DirectoryPath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryPath, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.DirectoryPath, Path = xValue });
 
                     else if (xKey.Equals ("DirectoryName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryName, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.DirectoryName, Path = xValue });
 
                     else if (xKey.Equals ("FilePath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FilePath, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.FilePath, Path = xValue });
 
                     else if (xKey.Equals ("FileName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileName, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.FileName, Path = xValue });
 
                     else if (xKey.Equals ("FileExtension", StringComparison.OrdinalIgnoreCase) && Validator.IsFileExtension (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileExtension, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.FileExtension, Path = xValue });
 
                     else if (xKey.Equals ("DirectoryNamePrefix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryNamePrefix, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.DirectoryNamePrefix, Path = xValue });
 
                     else if (xKey.Equals ("DirectoryNameSuffix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.DirectoryNameSuffix, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.DirectoryNameSuffix, Path = xValue });
 
                     else if (xKey.Equals ("FileNamePrefix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileNamePrefix, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.FileNamePrefix, Path = xValue });
 
                     else if (xKey.Equals ("FileNameSuffix", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
-                        xIgnoredPaths.Add (new IgnoredPathModel { PathType = PathType.FileNameSuffix, Path = xValue });
+                        xIgnoredPaths.Add (new IgnoredPathInfo { PathType = PathType.FileNameSuffix, Path = xValue });
 
                     else
                     {
@@ -102,7 +102,7 @@ namespace yyBom
                         ],
                         Encoding.UTF8);
 
-                List <SpecifiedEncodingModel> xSpecifiedEncodings = [];
+                List <SpecifiedEncodingInfo> xSpecifiedEncodings = [];
 
                 foreach (string xLine in File.ReadAllLines (xSpecifiedEncodingsFilePath, Encoding.UTF8).
                     Where (x => string.IsNullOrWhiteSpace (x) == false && x.TrimStart ().StartsWith ("//", StringComparison.Ordinal) == false))
@@ -131,19 +131,19 @@ namespace yyBom
                     {
                         if (xKey.Equals ("FilePath", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFilePath (xValue))
                         {
-                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FilePath, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingInfo { PathType = PathType.FilePath, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
                             continue;
                         }
 
                         if (xKey.Equals ("FileName", StringComparison.OrdinalIgnoreCase) && Validator.IsDirectoryOrFileName (xValue))
                         {
-                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FileName, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingInfo { PathType = PathType.FileName, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
                             continue;
                         }
 
                         if (xKey.Equals ("FileExtension", StringComparison.OrdinalIgnoreCase) && Validator.IsFileExtension (xValue))
                         {
-                            xSpecifiedEncodings.Add (new SpecifiedEncodingModel { PathType = PathType.FileExtension, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
+                            xSpecifiedEncodings.Add (new SpecifiedEncodingInfo { PathType = PathType.FileExtension, Path = xValue, EncodingName = xEncodingName, Encoding = Encoding.GetEncoding (xEncodingName) });
                             continue;
                         }
                     }
@@ -181,7 +181,7 @@ namespace yyBom
 
                 // -----------------------------------------------------------------------------
 
-                void LoadFile (FileInfo file, List <DetectedPathModel> detectedPaths)
+                void LoadFile (FileInfo file, List <DetectedPathInfo> detectedPaths)
                 {
                     // We dont need to load the same file twice.
                     if (detectedPaths.Any (x => x.PathType == PathType.FilePath && x.Path!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)))
@@ -191,35 +191,35 @@ namespace yyBom
 
                     if (xIgnoredPaths.Any (x => x.PathType == PathType.FilePath && x.Path!.Equals (file.FullName, StringComparison.OrdinalIgnoreCase)))
                     {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
                         return;
                     }
 
                     if (xIgnoredPaths.Any (x => x.PathType == PathType.FileName && x.Path!.Equals (file.Name, StringComparison.OrdinalIgnoreCase)))
                     {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
                         return;
                     }
 
                     if (xIgnoredPaths.Any (x => x.PathType == PathType.FileExtension && x.Path!.Equals (file.Extension, StringComparison.OrdinalIgnoreCase)))
                     {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
                         return;
                     }
 
                     if (xIgnoredPaths.Any (x => x.PathType == PathType.FileNamePrefix && file.Name.StartsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
                     {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
                         return;
                     }
 
                     if (xIgnoredPaths.Any (x => x.PathType == PathType.FileNameSuffix && file.Name.EndsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
                     {
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = true });
                         return;
                     }
 
-                    DetectedPathModel xDetectedPath = new () { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = false };
+                    DetectedPathInfo xDetectedPath = new () { PathType = PathType.FilePath, Path = file.FullName, IsIgnored = false };
 
                     try
                     {
@@ -265,7 +265,7 @@ namespace yyBom
 
                 const string xSpaces = "                                                                                "; // 80 spaces.
 
-                void LoadDirectory (DirectoryInfo directory, List <DetectedPathModel> detectedPaths)
+                void LoadDirectory (DirectoryInfo directory, List <DetectedPathInfo> detectedPaths)
                 {
                     try
                     {
@@ -275,25 +275,25 @@ namespace yyBom
 
                         if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryPath && x.Path!.Equals (directory.FullName, StringComparison.OrdinalIgnoreCase)))
                         {
-                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            detectedPaths.Add (new DetectedPathInfo { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
                             return;
                         }
 
                         if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryName && x.Path!.Equals (directory.Name, StringComparison.OrdinalIgnoreCase)))
                         {
-                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            detectedPaths.Add (new DetectedPathInfo { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
                             return;
                         }
 
                         if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryNamePrefix && directory.Name.StartsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
                         {
-                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            detectedPaths.Add (new DetectedPathInfo { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
                             return;
                         }
 
                         if (xIgnoredPaths.Any (x => x.PathType == PathType.DirectoryNameSuffix && directory.Name.EndsWith (x.Path!, StringComparison.OrdinalIgnoreCase)))
                         {
-                            detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
+                            detectedPaths.Add (new DetectedPathInfo { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = true });
                             return;
                         }
 
@@ -306,7 +306,7 @@ namespace yyBom
                         foreach (FileInfo xFile in directory.GetFiles ())
                             LoadFile (xFile, detectedPaths);
 
-                        detectedPaths.Add (new DetectedPathModel { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = false });
+                        detectedPaths.Add (new DetectedPathInfo { PathType = PathType.DirectoryPath, Path = directory.FullName, IsIgnored = false });
                     }
 
                     catch
@@ -320,7 +320,7 @@ namespace yyBom
                     }
                 }
 
-                List <DetectedPathModel> xDetectedPaths = [];
+                List <DetectedPathInfo> xDetectedPaths = [];
 
                 foreach (string xPath in xPaths.Select (x => x.Path))
                 {
