@@ -10,7 +10,7 @@ namespace yyBom
             try
             {
                 string xIgnoredPathsFileName = "IgnoredPaths.txt",
-                    xIgnoredPathsFilePath = yyApplicationDirectory.MapPath (xIgnoredPathsFileName);
+                    xIgnoredPathsFilePath = yyAppDirectory.MapPath (xIgnoredPathsFileName);
 
                 if (File.Exists (xIgnoredPathsFilePath) == false)
                     File.WriteAllLines (xIgnoredPathsFilePath,
@@ -91,7 +91,7 @@ namespace yyBom
                 // Somebody is too lazy to optimize the following code.
 
                 string xSpecifiedEncodingsFileName = "SpecifiedEncodings.txt",
-                    xSpecifiedEncodingsFilePath = yyApplicationDirectory.MapPath (xSpecifiedEncodingsFileName);
+                    xSpecifiedEncodingsFilePath = yyAppDirectory.MapPath (xSpecifiedEncodingsFileName);
 
                 if (File.Exists (xSpecifiedEncodingsFilePath) == false)
                     File.WriteAllLines (xSpecifiedEncodingsFilePath,
