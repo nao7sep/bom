@@ -408,7 +408,7 @@ namespace bom
 
             catch (Exception xException)
             {
-                yySimpleLogger.Default.TryWriteException (xException);
+                yyLogger.Default.TryWriteException (xException);
                 Console.WriteLine (xException.ToString ().TrimEnd ());
             }
 
