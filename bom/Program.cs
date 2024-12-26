@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using yyLib;
 
-namespace yyBom
+namespace bom
 {
     internal class Program
     {
@@ -383,7 +383,7 @@ namespace yyBom
                         $"{x.Path}, UTF-8 BOM: {x.StartsWithUtf8Bom}, Encoding: {(x.DetectedOrSpecifiedEncoding != null ? x.DetectedOrSpecifiedEncoding.EncodingName : yyString.GetVisibleString (null))}")));
                 }
 
-                string xOutputFilePath = Path.Join (yySpecialDirectories.Desktop, $"yyBom-{yyFormatter.ToRoundtripFileNameString (DateTime.UtcNow)}.txt");
+                string xOutputFilePath = Path.Join (yySpecialDirectories.Desktop, $"bom-{yyFormatter.ToRoundtripFileNameString (DateTime.UtcNow)}.txt");
                 File.WriteAllText (xOutputFilePath, xOutput.ToString (), Encoding.UTF8);
 
                 // -----------------------------------------------------------------------------

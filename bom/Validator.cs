@@ -1,4 +1,4 @@
-﻿namespace yyBom
+﻿namespace bom
 {
     public static class Validator
     {

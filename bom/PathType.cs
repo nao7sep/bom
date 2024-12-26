@@ -1,4 +1,4 @@
-﻿namespace yyBom
+﻿namespace bom
 {
     public enum PathType
     {

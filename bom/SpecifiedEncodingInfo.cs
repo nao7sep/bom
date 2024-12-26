@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace yyBom
+namespace bom
 {
     public class SpecifiedEncodingInfo
     {
